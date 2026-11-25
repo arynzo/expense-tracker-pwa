@@ -107,8 +107,14 @@ export function QuickPresets({ onTransactionAdded }: QuickPresetsProps) {
                 </div>
               )}
               <span className="text-xs font-medium">{preset.label}</span>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                ₹{preset.amount}
+              <span
+                className={`text-xs font-bold ${
+                  preset.type === "income"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-400"
+                }`}
+              >
+                {preset.type === "income" ? "+" : "-"}₹{preset.amount}
               </span>
               <span className="text-[10px] px-1.5 py-0.2 rounded-sm bg-secondary text-muted-foreground uppercase tracking-wider font-mono">
                 {preset.method}

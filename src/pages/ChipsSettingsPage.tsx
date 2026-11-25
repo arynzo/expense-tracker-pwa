@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Plus,
+  Minus,
   Trash2,
   Edit2,
   Zap,
@@ -13,11 +14,12 @@ import {
   AlertTriangle,
   Banknote,
   Smartphone,
+  Tag,
 } from "lucide-react";
 import { AppLayoutWrapper } from "@/components/app-layout-wrapper";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { type PresetItem } from "@/components/quick-presets";
-import { AVAILABLE_ICONS } from "@/lib/constants";
+import { AVAILABLE_ICONS, isIconUrl, isLucideIconName } from "@/lib/constants";
 import { formatINR } from "@/lib/utils";
 import {
   Select,
@@ -35,6 +37,14 @@ import {
   type CategoryRecord,
 } from "@/lib/storage";
 
+type IconSourceType = "Default Icons" | "Icon Link" | "Emoji";
+
+function detectIconSource(icon: string): IconSourceType {
+  if (isIconUrl(icon)) return "Icon Link";
+  if (isLucideIconName(icon)) return "Default Icons";
+  return icon.trim() ? "Emoji" : "Default Icons";
+}
+
 export default function ChipsSettingsPage() {
   const [presets, setPresets] = useState<PresetItem[]>(() => getPresets());
   const isLoadingPresets = false;
@@ -42,20 +52,23 @@ export default function ChipsSettingsPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<PresetItem | null>(null);
+  const [presetType, setPresetType] = useState<"income" | "expense">("expense");
   const [presetLabel, setPresetLabel] = useState("");
   const [presetAmount, setPresetAmount] = useState("");
   const [presetMethod, setPresetMethod] = useState<"cash" | "upi">("cash");
   const [presetCategory, setPresetCategory] = useState("Food");
+  const [iconSource, setIconSource] = useState<IconSourceType>("Default Icons");
   const [presetIcon, setPresetIcon] = useState("Coins");
   const [isSavingPreset, setIsSavingPreset] = useState(false);
 
   const [deletingPreset, setDeletingPreset] = useState<PresetItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const filteredCategories = dynamicCategories.filter((c) => c.type === presetType);
   const categoryList =
-    dynamicCategories.length > 0
-      ? dynamicCategories
-      : [{ _id: "fallback", name: "Food", icon: "Utensils", type: "expense" as const, color: "", isDefault: true }];
+    filteredCategories.length > 0
+      ? filteredCategories
+      : [{ _id: "fallback", name: "Other", icon: "Tag", type: presetType, color: "", isDefault: true }];
 
   const loadPresets = useCallback(() => {
     try {
@@ -78,22 +91,53 @@ export default function ChipsSettingsPage() {
 
   const handleOpenNewPreset = () => {
     setEditingPreset(null);
+    setPresetType("expense");
     setPresetLabel("");
     setPresetAmount("");
     setPresetMethod("cash");
-    setPresetCategory("Food");
+    const firstExp = dynamicCategories.find((c) => c.type === "expense");
+    setPresetCategory(firstExp?.name || "Food");
+    setIconSource("Default Icons");
     setPresetIcon("Coins");
     setIsModalOpen(true);
   };
 
   const handleOpenEditPreset = (p: PresetItem) => {
+    const iconVal = p.icon || "Coins";
     setEditingPreset(p);
+    setPresetType(p.type || "expense");
     setPresetLabel(p.label);
     setPresetAmount(p.amount.toString());
     setPresetMethod(p.method);
     setPresetCategory(p.category);
-    setPresetIcon(p.icon || "Coins");
+    setIconSource(detectIconSource(iconVal));
+    setPresetIcon(iconVal);
     setIsModalOpen(true);
+  };
+
+  const handleIconSourceChange = (nextSource: IconSourceType) => {
+    setIconSource(nextSource);
+    if (nextSource === "Default Icons") {
+      if (!isLucideIconName(presetIcon)) {
+        setPresetIcon("Coins");
+      }
+    } else if (nextSource === "Icon Link") {
+      if (!isIconUrl(presetIcon)) {
+        setPresetIcon("");
+      }
+    } else {
+      if (isLucideIconName(presetIcon) || isIconUrl(presetIcon)) {
+        setPresetIcon("");
+      }
+    }
+  };
+
+  const handlePresetTypeChange = (nextType: "income" | "expense") => {
+    setPresetType(nextType);
+    const matching = dynamicCategories.filter((c) => c.type === nextType);
+    if (!matching.some((c) => c.name === presetCategory)) {
+      setPresetCategory(matching[0]?.name || "Other");
+    }
   };
 
   const handleSavePreset = (e: React.FormEvent) => {
@@ -104,15 +148,25 @@ export default function ChipsSettingsPage() {
       return;
     }
 
+    const trimmedIcon = presetIcon.trim();
+    if (iconSource === "Icon Link" && !isIconUrl(trimmedIcon)) {
+      toast.error("Please enter a valid icon URL (https://...)");
+      return;
+    }
+    if (iconSource === "Emoji" && !trimmedIcon) {
+      toast.error("Please enter an emoji");
+      return;
+    }
+
     setIsSavingPreset(true);
     try {
       const payload = {
         label: presetLabel.trim(),
         amount: numAmount,
-        type: "expense" as const,
+        type: presetType,
         method: presetMethod,
         category: presetCategory,
-        icon: presetIcon,
+        icon: trimmedIcon || "Coins",
       };
 
       const res = editingPreset
@@ -154,7 +208,7 @@ export default function ChipsSettingsPage() {
   };
 
   return (
-    <AppLayoutWrapper pageTitle="Quick-Add Chips">
+    <AppLayoutWrapper pageTitle="Quick-Add Presets">
       {() => (
         <div className="max-w-4xl space-y-6">
           <div className="flex items-center justify-between">
@@ -170,14 +224,14 @@ export default function ChipsSettingsPage() {
               onClick={handleOpenNewPreset}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Add Preset Chip
+              <Plus className="w-4 h-4" /> Add Preset
             </button>
           </div>
 
           <div className="bg-card border border-border text-card-foreground rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
             <div className="flex items-center justify-between pb-2 border-b border-border">
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Configured Chips ({presets.length})
+                Configured Presets ({presets.length})
               </h3>
             </div>
 
@@ -196,10 +250,10 @@ export default function ChipsSettingsPage() {
                   <Zap className="w-6 h-6" />
                 </div>
                 <h4 className="text-sm font-semibold text-foreground">
-                  No preset chips created yet
+                  No presets created yet
                 </h4>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Create your first shortcut chip to log frequent daily expenses
+                  Create your first shortcut preset to log frequent transactions
                   in 1 single tap.
                 </p>
                 <button
@@ -207,7 +261,7 @@ export default function ChipsSettingsPage() {
                   onClick={handleOpenNewPreset}
                   className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Create First Chip
+                  <Plus className="w-3.5 h-3.5" /> Create First Preset
                 </button>
               </div>
             ) : (
@@ -226,7 +280,14 @@ export default function ChipsSettingsPage() {
                           {p.label}
                         </h4>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          <span
+                            className={`font-bold ${
+                              p.type === "income"
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-rose-600 dark:text-rose-400"
+                            }`}
+                          >
+                            {p.type === "income" ? "+" : "-"}
                             {formatINR(p.amount)}
                           </span>
                           <span>•</span>
@@ -241,7 +302,7 @@ export default function ChipsSettingsPage() {
                       <button
                         type="button"
                         onClick={() => handleOpenEditPreset(p)}
-                        title="Edit chip"
+                        title="Edit preset"
                         className="p-1.5 rounded-lg bg-secondary hover:bg-muted text-foreground transition cursor-pointer"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -249,7 +310,7 @@ export default function ChipsSettingsPage() {
                       <button
                         type="button"
                         onClick={() => setDeletingPreset(p)}
-                        title="Delete chip"
+                        title="Delete preset"
                         className="p-1.5 rounded-lg bg-secondary hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -269,7 +330,7 @@ export default function ChipsSettingsPage() {
               >
                 <div className="flex items-center justify-between border-b border-border pb-3">
                   <h3 className="font-bold text-base text-foreground">
-                    {editingPreset ? "Edit Shortcut Chip" : "New Shortcut Chip"}
+                    {editingPreset ? "Edit Preset" : "New Preset"}
                   </h3>
                   <button
                     type="button"
@@ -281,9 +342,36 @@ export default function ChipsSettingsPage() {
                 </div>
 
                 <form onSubmit={handleSavePreset} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-muted/60 rounded-xl border border-border">
+                    <button
+                      type="button"
+                      onClick={() => handlePresetTypeChange("expense")}
+                      className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                        presetType === "expense"
+                          ? "bg-rose-600 text-white shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                      Expense
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePresetTypeChange("income")}
+                      className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                        presetType === "income"
+                          ? "bg-emerald-600 text-white shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Income
+                    </button>
+                  </div>
+
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Shortcut Label
+                      Preset Label
                     </label>
                     <input
                       type="text"
@@ -381,25 +469,105 @@ export default function ChipsSettingsPage() {
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Chip Icon
+                      Icon Type
                     </label>
-                    <div className="grid grid-cols-7 gap-2 max-h-32 overflow-y-auto p-1.5 bg-background rounded-xl border border-input overscroll-contain">
-                      {AVAILABLE_ICONS.map((icon) => (
-                        <button
-                          key={icon}
-                          type="button"
-                          onClick={() => setPresetIcon(icon)}
-                          className={`p-2 rounded-lg flex items-center justify-center transition cursor-pointer ${
-                            presetIcon === icon
-                              ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                          }`}
-                        >
-                          <CategoryIcon name={icon} className="w-4 h-4" />
-                        </button>
-                      ))}
-                    </div>
+                    <Select
+                      value={iconSource}
+                      onValueChange={(val) => {
+                        if (val) handleIconSourceChange(val as IconSourceType);
+                      }}
+                    >
+                      <SelectTrigger className="w-full h-10 rounded-xl bg-background border-input text-sm font-medium">
+                        <SelectValue placeholder="Select icon type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Default Icons">Default Icons</SelectItem>
+                        <SelectItem value="Icon Link">Icon Link</SelectItem>
+                        <SelectItem value="Emoji">Emoji</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  {iconSource === "Default Icons" && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Select Icon
+                        </label>
+                        <span className="text-[11px] text-muted-foreground">
+                          Selected: <b className="text-foreground">{presetIcon}</b>
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-7 gap-2 max-h-36 overflow-y-auto p-1.5 bg-background rounded-xl border border-input overscroll-contain">
+                        {AVAILABLE_ICONS.map((icon) => (
+                          <button
+                            key={icon}
+                            type="button"
+                            onClick={() => setPresetIcon(icon)}
+                            title={icon}
+                            className={`p-2 rounded-lg flex items-center justify-center transition cursor-pointer ${
+                              presetIcon === icon
+                                ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
+                          >
+                            <CategoryIcon name={icon} className="w-4 h-4" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {iconSource === "Icon Link" && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Icon Image URL
+                      </label>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl bg-background border border-input flex items-center justify-center shrink-0 overflow-hidden">
+                          {isIconUrl(presetIcon) ? (
+                            <CategoryIcon name={presetIcon} className="w-6 h-6" />
+                          ) : (
+                            <Tag className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <input
+                          type="url"
+                          value={presetIcon}
+                          onChange={(e) => setPresetIcon(e.target.value)}
+                          placeholder="https://example.com/icon.png"
+                          required
+                          className="w-full bg-background border border-input rounded-xl px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-hidden focus:border-ring"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {iconSource === "Emoji" && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Type or Paste Emoji
+                      </label>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl bg-background border border-input flex items-center justify-center shrink-0 text-lg">
+                          {presetIcon.trim() ? (
+                            <CategoryIcon name={presetIcon} className="w-5 h-5" />
+                          ) : (
+                            <span className="text-muted-foreground text-xs">?</span>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={presetIcon}
+                          onChange={(e) => setPresetIcon(e.target.value)}
+                          placeholder="e.g. ☕ 🚗 💰 🛒"
+                          required
+                          maxLength={12}
+                          className="w-full bg-background border border-input rounded-xl px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-hidden focus:border-ring"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-end gap-2 pt-3">
                     <button
@@ -439,7 +607,7 @@ export default function ChipsSettingsPage() {
                     <AlertTriangle className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-base text-foreground">
-                    Delete Preset Chip?
+                    Delete Preset?
                   </h3>
                 </div>
 

@@ -266,11 +266,11 @@ export default function CategoriesPage() {
                       >
                         <CategoryIcon name={cat.icon} category={cat.name} className="w-4 h-4" />
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="text-sm font-semibold text-foreground truncate">
+                      <div className="min-w-0 flex flex-col gap-0.5">
+                        <h4 className="text-sm font-semibold text-foreground truncate leading-tight">
                           {cat.name}
                         </h4>
-                        <span className="text-[10px] text-muted-foreground capitalize">
+                        <span className="text-[10px] text-muted-foreground capitalize leading-none">
                           {cat.type}
                         </span>
                       </div>

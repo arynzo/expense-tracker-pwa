@@ -17,9 +17,23 @@ import {
   Check,
   Trash2,
   AlertTriangle,
+  Palette,
+  ExternalLink,
 } from "lucide-react";
 import { AppLayoutWrapper } from "@/components/app-layout-wrapper";
 import { useMounted } from "@/hooks/use-mounted";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+import {
+  THEME_PRESETS,
+  applyThemePreset,
+  getSavedThemePreset,
+  getSavedCustomThemeCss,
+} from "@/lib/themes";
 import {
   downloadTransactionsCSV,
   copyTransactionsCSV,
@@ -56,8 +70,8 @@ const CLEAR_ACTION_META: Record<
   },
   presets: {
     label: "Clear Presets",
-    title: "Clear All Preset Chips?",
-    description: "This will remove all 1-tap quick-add preset chips from your dashboard.",
+    title: "Clear All Presets?",
+    description: "This will remove all 1-tap quick-add presets from your dashboard.",
   },
 };
 
@@ -76,6 +90,37 @@ export default function SettingsPage() {
 
   // Clear Data Confirmation state
   const [confirmClear, setConfirmClear] = useState<ClearActionType | null>(null);
+
+  // Theme Preset state
+  const [themePreset, setThemePreset] = useState<string>(() => getSavedThemePreset());
+  const [customThemeCss, setCustomThemeCss] = useState<string>(() => getSavedCustomThemeCss());
+
+  const handleThemePresetChange = (val: string) => {
+    setThemePreset(val);
+    if (val === "custom") {
+      if (customThemeCss.trim()) {
+        const ok = applyThemePreset("custom", customThemeCss);
+        if (ok) toast.success("Custom Shadcn theme applied!");
+      }
+      return;
+    }
+    applyThemePreset(val);
+    const presetObj = THEME_PRESETS.find((p) => p.id === val);
+    toast.success(`Theme changed to ${presetObj?.name || val}`);
+  };
+
+  const handleApplyCustomCss = () => {
+    if (!customThemeCss.trim()) {
+      toast.error("Please paste Shadcn CSS variables first");
+      return;
+    }
+    const ok = applyThemePreset("custom", customThemeCss);
+    if (!ok) {
+      toast.error("No valid CSS variables found (expected --background, --card, etc.)");
+      return;
+    }
+    toast.success("Custom Shadcn theme applied!");
+  };
 
   const handleConfirmClear = () => {
     if (!confirmClear) return;
@@ -187,10 +232,10 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-foreground group-hover:text-primary transition">
-                      Quick-Add Preset Chips
+                      Quick-Add Presets
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Configure 1-tap shortcut chips, default amounts, payment methods, and icons
+                      Configure 1-tap shortcut presets, default amounts, payment methods, and icons
                     </p>
                   </div>
                 </div>
@@ -265,6 +310,122 @@ export default function SettingsPage() {
               >
                 <Laptop className="w-4 h-4" /> System
               </button>
+            </div>
+
+            {/* Theme Preset Selector */}
+            <div className="pt-3 border-t border-border space-y-3">
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-primary" />
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">Theme Preset</h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Switch card colors, border radius, and typography across the app
+                  </p>
+                </div>
+              </div>
+
+              <div className="max-w-sm">
+                <Select
+                  value={themePreset}
+                  onValueChange={(val) => {
+                    if (val) handleThemePresetChange(val);
+                  }}
+                >
+                  <SelectTrigger className="w-full h-10 rounded-xl bg-background border-input text-sm font-medium">
+                    {(() => {
+                      const activePreset = THEME_PRESETS.find((p) => p.id === themePreset);
+                      if (activePreset) {
+                        return (
+                          <div className="flex items-center gap-2.5 truncate">
+                            <span className="flex items-center -space-x-1 shrink-0">
+                              {activePreset.preview.map((color, idx) => (
+                                <span
+                                  key={idx}
+                                  className="w-3 h-3 rounded-full border border-border"
+                                  style={{ backgroundColor: color }}
+                                />
+                              ))}
+                            </span>
+                            <span className="truncate">{activePreset.name}</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="flex items-center gap-2 truncate">
+                          <Palette className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="truncate">Custom Shadcn CSS</span>
+                        </div>
+                      );
+                    })()}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {THEME_PRESETS.map((preset) => (
+                      <SelectItem key={preset.id} value={preset.id}>
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex items-center -space-x-1 shrink-0">
+                            {preset.preview.map((color, idx) => (
+                              <span
+                                key={idx}
+                                className="w-3 h-3 rounded-full border border-border"
+                                style={{ backgroundColor: color }}
+                              />
+                            ))}
+                          </span>
+                          <span>{preset.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">
+                      <div className="flex items-center gap-2">
+                        <Palette className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>Custom Shadcn CSS</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {themePreset === "custom" && (
+                <div className="space-y-2.5 pt-1 animate-in fade-in duration-150">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Paste Shadcn Theme CSS (:root / .dark variables)
+                    </label>
+                    <a
+                      href="https://ui.shadcn.com/create"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-secondary hover:bg-muted border border-border text-xs font-semibold text-foreground transition"
+                    >
+                      <span>Create Theme on Shadcn</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                    </a>
+                  </div>
+                  <textarea
+                    value={customThemeCss}
+                    onChange={(e) => setCustomThemeCss(e.target.value)}
+                    rows={5}
+                    placeholder={`:root {\n  --background: 0 0% 100%;\n  --card: 0 0% 100%;\n  --primary: 142.1 76.2% 36.3%;\n  --radius: 0.75rem;\n}\n.dark {\n  --background: 20 14.3% 4.1%;\n  --card: 20 14.3% 6%;\n}`}
+                    className="w-full bg-background border border-input rounded-xl p-3 text-xs font-mono text-foreground placeholder:text-muted-foreground/50 focus:outline-hidden focus:border-ring focus:ring-1 focus:ring-ring resize-y"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleApplyCustomCss}
+                      className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:opacity-90 transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Apply Custom Theme
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleThemePresetChange("default")}
+                      className="px-3.5 py-2 rounded-xl bg-secondary hover:bg-muted text-xs font-semibold text-foreground transition cursor-pointer"
+                    >
+                      Reset to Default
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
