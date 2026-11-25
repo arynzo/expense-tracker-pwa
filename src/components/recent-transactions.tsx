@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Clock } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { formatINR, formatDateLabel, formatTimeLabel } from "@/lib/utils";
 import type { TransactionData } from "./transaction-modal";
@@ -31,12 +31,9 @@ export function RecentTransactions({
   return (
     <div className="bg-card border border-border text-card-foreground rounded-2xl p-5 space-y-4 shadow-xs">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Recent Transactions</h3>
-            <p className="text-[11px] text-muted-foreground">Latest entries (Max 5)</p>
-          </div>
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Recent Transactions</h3>
+          <p className="text-[11px] text-muted-foreground">Latest entries (Max 5)</p>
         </div>
         <Link
           to="/transactions"

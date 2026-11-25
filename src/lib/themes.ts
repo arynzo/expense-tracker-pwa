@@ -11,6 +11,23 @@ export interface ThemePreset {
 
 export const THEME_PRESET_KEY = "expense_tracker_theme_preset";
 export const CUSTOM_THEME_CSS_KEY = "expense_tracker_custom_theme_css";
+export const HEADING_WEIGHT_KEY = "expense_tracker_heading_weight";
+export const BODY_WEIGHT_KEY = "expense_tracker_body_weight";
+
+export const HEADING_WEIGHT_OPTIONS = [
+  { value: "400", label: "Normal" },
+  { value: "500", label: "Medium" },
+  { value: "600", label: "Semibold" },
+  { value: "700", label: "Bold" },
+  { value: "800", label: "Extra Bold" },
+] as const;
+
+export const BODY_WEIGHT_OPTIONS = [
+  { value: "300", label: "Light" },
+  { value: "400", label: "Normal" },
+  { value: "500", label: "Medium" },
+  { value: "600", label: "Semibold" },
+] as const;
 
 export const THEME_PRESETS: ThemePreset[] = [
   {
@@ -19,7 +36,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     description: "Clean neutral monochrome",
     preview: ["#18181b", "#f4f4f5", "#10b981"],
     radius: "0.625rem",
-    fontSans: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontSans: '"DM Sans Variable", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     light: {},
     dark: {},
   },
@@ -29,7 +46,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     description: "Soft mint cards & rounded corners",
     preview: ["#059669", "#ecfdf5", "#064e3b"],
     radius: "0.875rem",
-    fontSans: '"Segoe UI", system-ui, -apple-system, sans-serif',
+    fontSans: '"DM Sans Variable", system-ui, -apple-system, sans-serif',
     light: {
       "--background": "oklch(0.985 0.008 160)",
       "--foreground": "oklch(0.18 0.02 165)",
@@ -77,7 +94,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     description: "Deep slate & indigo accents",
     preview: ["#4f46e5", "#eef2ff", "#1e1b4b"],
     radius: "0.75rem",
-    fontSans: '"Inter", system-ui, -apple-system, sans-serif',
+    fontSans: '"DM Sans Variable", system-ui, -apple-system, sans-serif',
     light: {
       "--background": "oklch(0.985 0.008 265)",
       "--foreground": "oklch(0.18 0.03 265)",
@@ -125,7 +142,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     description: "Cozy stone surfaces & pill-like radius",
     preview: ["#d97706", "#fffbeb", "#451a03"],
     radius: "1rem",
-    fontSans: 'Georgia, "Segoe UI", system-ui, sans-serif',
+    fontSans: '"DM Sans Variable", system-ui, -apple-system, sans-serif',
     light: {
       "--background": "oklch(0.985 0.012 80)",
       "--foreground": "oklch(0.20 0.025 55)",
@@ -316,4 +333,49 @@ export function applyThemePreset(presetId: string, customCss?: string): boolean 
 
   styleEl.textContent = `:root {\n${lightRules}\n}\n.dark {\n${darkRules}\n}`;
   return true;
+}
+
+export function getSavedHeadingWeight(): string {
+  try {
+    return localStorage.getItem(HEADING_WEIGHT_KEY) || "600";
+  } catch {
+    return "600";
+  }
+}
+
+export function getSavedBodyWeight(): string {
+  try {
+    return localStorage.getItem(BODY_WEIGHT_KEY) || "400";
+  } catch {
+    return "400";
+  }
+}
+
+export function applyTypographyWeights(headingWeight?: string, bodyWeight?: string): void {
+  const hWeight = headingWeight ?? getSavedHeadingWeight();
+  const bWeight = bodyWeight ?? getSavedBodyWeight();
+
+  try {
+    localStorage.setItem(HEADING_WEIGHT_KEY, hWeight);
+    localStorage.setItem(BODY_WEIGHT_KEY, bWeight);
+  } catch {
+    // ignore
+  }
+
+  const styleId = "app-typography-weight-style";
+  let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = styleId;
+    document.head.appendChild(styleEl);
+  }
+
+  styleEl.textContent = `
+    body {
+      font-weight: ${bWeight};
+    }
+    h1, h2, h3, h4 {
+      font-weight: ${hWeight} !important;
+    }
+  `;
 }

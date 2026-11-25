@@ -30,9 +30,14 @@ import {
 } from "@/components/ui/select";
 import {
   THEME_PRESETS,
+  HEADING_WEIGHT_OPTIONS,
+  BODY_WEIGHT_OPTIONS,
   applyThemePreset,
+  applyTypographyWeights,
   getSavedThemePreset,
   getSavedCustomThemeCss,
+  getSavedHeadingWeight,
+  getSavedBodyWeight,
 } from "@/lib/themes";
 import {
   downloadTransactionsCSV,
@@ -91,9 +96,25 @@ export default function SettingsPage() {
   // Clear Data Confirmation state
   const [confirmClear, setConfirmClear] = useState<ClearActionType | null>(null);
 
-  // Theme Preset state
+  // Theme Preset & Font Weight state
   const [themePreset, setThemePreset] = useState<string>(() => getSavedThemePreset());
   const [customThemeCss, setCustomThemeCss] = useState<string>(() => getSavedCustomThemeCss());
+  const [headingWeight, setHeadingWeight] = useState<string>(() => getSavedHeadingWeight());
+  const [bodyWeight, setBodyWeight] = useState<string>(() => getSavedBodyWeight());
+
+  const handleHeadingWeightChange = (val: string) => {
+    setHeadingWeight(val);
+    applyTypographyWeights(val, bodyWeight);
+    const opt = HEADING_WEIGHT_OPTIONS.find((o) => o.value === val);
+    toast.success(`Title font weight: ${opt?.label || val}`);
+  };
+
+  const handleBodyWeightChange = (val: string) => {
+    setBodyWeight(val);
+    applyTypographyWeights(headingWeight, val);
+    const opt = BODY_WEIGHT_OPTIONS.find((o) => o.value === val);
+    toast.success(`Body font weight: ${opt?.label || val}`);
+  };
 
   const handleThemePresetChange = (val: string) => {
     setThemePreset(val);
@@ -314,14 +335,11 @@ export default function SettingsPage() {
 
             {/* Theme Preset Selector */}
             <div className="pt-3 border-t border-border space-y-3">
-              <div className="flex items-center gap-2">
-                <Palette className="w-4 h-4 text-primary" />
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground">Theme Preset</h4>
-                  <p className="text-[11px] text-muted-foreground">
-                    Switch card colors, border radius, and typography across the app
-                  </p>
-                </div>
+              <div>
+                <h4 className="text-sm font-semibold text-foreground">Theme Preset</h4>
+                <p className="text-[11px] text-muted-foreground">
+                  Switch card colors, border radius, and typography across the app
+                </p>
               </div>
 
               <div className="max-w-sm">
@@ -426,6 +444,71 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Font Weight Selectors */}
+            <div className="pt-3 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Title Font Weight */}
+              <div className="space-y-2">
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">Title Font Weight</h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Adjust thickness of page &amp; card headings
+                  </p>
+                </div>
+                <Select
+                  value={headingWeight}
+                  onValueChange={(val) => {
+                    if (val) handleHeadingWeightChange(val);
+                  }}
+                >
+                  <SelectTrigger className="w-full h-10 rounded-xl bg-background border-input text-sm">
+                    <span style={{ fontWeight: Number(headingWeight) }}>
+                      {HEADING_WEIGHT_OPTIONS.find((o) => o.value === headingWeight)?.label || "Semibold"}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {HEADING_WEIGHT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <span style={{ fontWeight: Number(opt.value) }}>
+                          {opt.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Body Font Weight */}
+              <div className="space-y-2">
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">Body Font Weight</h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Adjust thickness of general text &amp; labels
+                  </p>
+                </div>
+                <Select
+                  value={bodyWeight}
+                  onValueChange={(val) => {
+                    if (val) handleBodyWeightChange(val);
+                  }}
+                >
+                  <SelectTrigger className="w-full h-10 rounded-xl bg-background border-input text-sm">
+                    <span style={{ fontWeight: Number(bodyWeight) }}>
+                      {BODY_WEIGHT_OPTIONS.find((o) => o.value === bodyWeight)?.label || "Normal"}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BODY_WEIGHT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <span style={{ fontWeight: Number(opt.value) }}>
+                          {opt.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

@@ -216,7 +216,7 @@ export default function ChipsSettingsPage() {
               to="/settings"
               className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Settings
+              <ArrowLeft className="w-4 h-4" /> Settings
             </Link>
 
             <button

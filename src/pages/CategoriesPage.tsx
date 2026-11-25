@@ -174,16 +174,20 @@ export default function CategoriesPage() {
               className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition bg-card border border-border px-3 py-1.5 rounded-xl shadow-xs"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back to Settings
+              Settings
             </Link>
 
             <button
               type="button"
               onClick={handleOpenAdd}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-xs font-semibold shadow-xs transition cursor-pointer ${
+                activeTab === "income"
+                  ? "bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700"
+                  : "bg-rose-600 hover:bg-rose-500 active:bg-rose-700"
+              }`}
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              New {activeTab === "income" ? "Income" : "Expense"} Category
+              New Category
             </button>
           </div>
 
