@@ -10,10 +10,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "icon.svg", "pwa-192x192.png", "pwa-512x512.png"],
+      includeAssets: ["favicon.ico", "pwa-192x192.png", "pwa-512x512.png"],
       manifest: {
         name: "Expense Tracker",
-        short_name: "ExpenseTracker",
+        short_name: "Expense Tracker",
         description: "Personal Offline Expense & Income Tracker",
         start_url: "/",
         scope: "/",
@@ -33,12 +33,6 @@ export default defineConfig({
             type: "image/png",
             purpose: "any maskable",
           },
-          {
-            src: "/icon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "any",
-          },
         ],
       },
       workbox: {
@@ -57,7 +51,10 @@ export default defineConfig({
     rolldownOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("node_modules/recharts") || id.includes("node_modules/d3-")) {
+          if (
+            id.includes("node_modules/recharts") ||
+            id.includes("node_modules/d3-")
+          ) {
             return "charts-vendor";
           }
           if (id.includes("node_modules/lucide-react")) {
