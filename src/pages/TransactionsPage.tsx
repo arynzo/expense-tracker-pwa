@@ -62,7 +62,7 @@ function TransactionsContent({
 
   const groupedTransactions: Record<string, TransactionData[]> = {};
   transactions.forEach((t) => {
-    const label = formatDateLabel(t.date);
+    const label = formatDateLabel(t.createdAt);
     if (!groupedTransactions[label]) {
       groupedTransactions[label] = [];
     }
@@ -300,7 +300,7 @@ function TransactionsContent({
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <span className="capitalize">{t.category}</span>
                               <span>•</span>
-                              <span>{formatTimeLabel(t.date)}</span>
+                              <span>{formatTimeLabel(t.createdAt)}</span>
                               <span>•</span>
                               <span className="uppercase text-[10px] px-1.5 py-0.2 rounded-sm bg-secondary text-muted-foreground font-mono font-medium">
                                 {t.method}

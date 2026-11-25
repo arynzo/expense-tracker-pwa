@@ -13,7 +13,7 @@ export const transactionSchema = z.object({
     .positive("Amount must be greater than 0"),
   method: z.enum(["cash", "upi"]),
   category: z.string().trim().default("Other"),
-  date: z.string().or(z.date()).optional(),
+  createdAt: z.string().or(z.date()).optional(),
 });
 
 export const quickPresetSchema = z.object({

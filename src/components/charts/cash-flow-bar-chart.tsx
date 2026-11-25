@@ -231,11 +231,20 @@ export function CashFlowBarChart({ allDailyTrend }: CashFlowBarChartProps) {
             No transaction records found for this interval
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+          <div className="h-full w-full overflow-x-auto pb-1">
+            <div
+              className="h-full"
+              style={
+                chartData.length > 10
+                  ? { minWidth: `${chartData.length * 52}px` }
+                  : { width: "100%" }
+              }
             >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                >
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="currentColor"
@@ -319,8 +328,10 @@ export function CashFlowBarChart({ allDailyTrend }: CashFlowBarChartProps) {
                 radius={[6, 6, 0, 0]}
                 maxBarSize={40}
               />
-            </BarChart>
-          </ResponsiveContainer>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         )}
       </div>
     </div>

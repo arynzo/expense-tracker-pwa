@@ -11,7 +11,7 @@ import {
   X,
   Loader2,
   AlertTriangle,
-  FolderTree,
+  FolderOpen,
 } from "lucide-react";
 import { AppLayoutWrapper } from "@/components/app-layout-wrapper";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -191,7 +191,7 @@ export default function CategoriesPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <FolderTree className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <FolderOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   <h3 className="text-base font-bold text-foreground">
                     Categories
                   </h3>

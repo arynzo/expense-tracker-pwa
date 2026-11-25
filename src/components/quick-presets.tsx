@@ -37,7 +37,7 @@ export function QuickPresets({ onTransactionAdded }: QuickPresetsProps) {
         method: preset.method,
         category: preset.category,
         note: "Quick added via chip",
-        date: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
       });
 
       if (!result.success) {

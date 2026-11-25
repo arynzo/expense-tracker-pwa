@@ -81,9 +81,9 @@ export function RecentTransactions({
                       {t.title}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{formatDateLabel(t.date)}</span>
+                      <span>{formatDateLabel(t.createdAt)}</span>
                       <span>•</span>
-                      <span>{formatTimeLabel(t.date)}</span>
+                      <span>{formatTimeLabel(t.createdAt)}</span>
                       <span>•</span>
                       <span className="uppercase text-[10px] px-1 rounded-sm bg-secondary text-muted-foreground font-mono">
                         {t.method}

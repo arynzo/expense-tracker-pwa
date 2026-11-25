@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { X, Calendar, Plus, Minus, Check, Loader2, Smartphone, Banknote, Trash2 } from "lucide-react";
+import { X, Calendar, Clock, Plus, Minus, Check, Loader2, Smartphone, Banknote, Trash2, Maximize2, Minimize2 } from "lucide-react";
 import { formatINR, toLocalDateKey } from "@/lib/utils";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import {
@@ -26,7 +26,15 @@ export interface TransactionData {
   amount: number;
   method: "cash" | "upi";
   category: string;
-  date: string;
+  createdAt: string;
+}
+
+function toLocalTimeValue(dateInput: string | Date): string {
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "12:00";
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
 }
 
 interface TransactionModalProps {
@@ -71,13 +79,19 @@ function TransactionModalContent({
     return firstExpense?.name || "Food";
   });
   const [date, setDate] = useState<string>(() =>
-    initialData ? toLocalDateKey(initialData.date) : toLocalDateKey(new Date())
+    initialData ? toLocalDateKey(initialData.createdAt) : toLocalDateKey(new Date())
   );
+  const [time, setTime] = useState<string>(() =>
+    initialData ? toLocalTimeValue(initialData.createdAt) : toLocalTimeValue(new Date())
+  );
+  const [isNoteExpanded, setIsNoteExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const timeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -135,7 +149,7 @@ function TransactionModalContent({
         note: note.trim(),
         method,
         category,
-        date: new Date(date + "T12:00:00").toISOString(),
+        createdAt: new Date(`${date}T${time || "00:00"}`).toISOString(),
       };
 
       const res = initialData?._id
@@ -324,25 +338,85 @@ function TransactionModalContent({
             </div>
           </div>
 
-          <div className="space-y-1 w-full min-w-0">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Date
-            </label>
-            <div className="relative w-full min-w-0">
-              <div className="w-full flex items-center justify-between h-11 sm:h-10 px-3.5 py-2.5 rounded-xl border border-input bg-background text-base sm:text-sm text-foreground">
-                <span className="font-normal text-foreground truncate">
-                  {date ? new Date(date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Select date"}
-                </span>
-                <Calendar className="w-4 h-4 text-muted-foreground shrink-0 pointer-events-none" />
-              </div>
+          <div className="grid grid-cols-2 gap-3 w-full min-w-0">
+            {/* Date Picker */}
+            <div className="space-y-1 min-w-0">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Date
+              </label>
+              <div
+                onClick={() => {
+                  const el = dateInputRef.current;
+                  if (el) {
+                    el.focus();
+                    try {
+                      el.showPicker?.();
+                    } catch {
+                      // fallback for browsers without showPicker
+                    }
+                  }
+                }}
+                className="relative w-full min-w-0 cursor-pointer"
+              >
+                <div className="w-full flex items-center justify-between h-11 sm:h-10 px-3 py-2.5 rounded-xl border border-input bg-background text-sm text-foreground hover:border-ring transition">
+                  <span className="font-normal text-foreground truncate">
+                    {date ? new Date(date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Select date"}
+                  </span>
+                  <Calendar className="w-4 h-4 text-muted-foreground shrink-0 pointer-events-none" />
+                </div>
 
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base sm:text-sm"
-              />
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base sm:text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Time Picker */}
+            <div className="space-y-1 min-w-0">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Time
+              </label>
+              <div
+                onClick={() => {
+                  const el = timeInputRef.current;
+                  if (el) {
+                    el.focus();
+                    try {
+                      el.showPicker?.();
+                    } catch {
+                      // fallback for browsers without showPicker
+                    }
+                  }
+                }}
+                className="relative w-full min-w-0 cursor-pointer"
+              >
+                <div className="w-full flex items-center justify-between h-11 sm:h-10 px-3 py-2.5 rounded-xl border border-input bg-background text-sm text-foreground hover:border-ring transition">
+                  <span className="font-normal text-foreground truncate">
+                    {time
+                      ? new Date(`2000-01-01T${time}`).toLocaleTimeString("en-IN", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
+                      : "Select time"}
+                  </span>
+                  <Clock className="w-4 h-4 text-muted-foreground shrink-0 pointer-events-none" />
+                </div>
+
+                <input
+                  ref={timeInputRef}
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  required
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-base sm:text-sm"
+                />
+              </div>
             </div>
           </div>
 
@@ -351,15 +425,29 @@ function TransactionModalContent({
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Note (Optional)
               </label>
-              <span className="text-[11px] text-muted-foreground">{note.length}/500</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-muted-foreground">{note.length}/500</span>
+                <button
+                  type="button"
+                  onClick={() => setIsNoteExpanded((prev) => !prev)}
+                  title={isNoteExpanded ? "Collapse note" : "Expand note"}
+                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer"
+                >
+                  {isNoteExpanded ? (
+                    <Minimize2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
             </div>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Add details or notes..."
               maxLength={500}
-              rows={2}
-              className="w-full min-w-0 bg-background border border-input rounded-xl px-3.5 py-2.5 text-base sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-hidden focus:border-ring focus:ring-1 focus:ring-ring transition resize-none box-border"
+              rows={isNoteExpanded ? 6 : 2}
+              className="w-full min-w-0 bg-background border border-input rounded-xl px-3.5 py-2.5 text-base sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-hidden focus:border-ring focus:ring-1 focus:ring-ring transition resize-y box-border"
             />
           </div>
 

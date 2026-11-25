@@ -26,9 +26,7 @@ export interface TransactionRecord {
   amount: number;
   method: "cash" | "upi";
   category: string;
-  date: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface CategoryRecord {
@@ -38,7 +36,6 @@ export interface CategoryRecord {
   icon: string;
   color: string;
   isDefault: boolean;
-  createdAt: string;
 }
 
 export interface PresetRecord {
@@ -50,7 +47,6 @@ export interface PresetRecord {
   category: string;
   icon: string;
   order: number;
-  createdAt: string;
 }
 
 export interface TransactionQueryParams {
@@ -79,6 +75,7 @@ export interface DashboardSummaryData {
     upi: { income: number; expense: number; total: number };
   };
   categoryBreakdown: { category: string; total: number; count: number }[];
+  incomeCategoryBreakdown: { category: string; total: number; count: number }[];
   dailyTrend: { date: string; income: number; expense: number }[];
   allDailyTrend: { date: string; income: number; expense: number }[];
   recentTransactions: TransactionRecord[];
@@ -108,16 +105,24 @@ function writeJSON<T>(key: string, value: T): void {
 // ==================== TRANSACTIONS CRUD ====================
 
 function readAllTransactionsRaw(): TransactionRecord[] {
-  const list = readJSON<TransactionRecord[]>(KEYS.TRANSACTIONS, []);
-  return Array.isArray(list) ? list : [];
+  const list = readJSON<Array<TransactionRecord & { date?: string }>>(KEYS.TRANSACTIONS, []);
+  if (!Array.isArray(list)) return [];
+  return list.map((item) => ({
+    _id: item._id,
+    type: item.type,
+    title: item.title,
+    note: item.note || "",
+    amount: item.amount,
+    method: item.method,
+    category: item.category || "Other",
+    createdAt: item.createdAt || item.date || new Date().toISOString(),
+  }));
 }
 
 function sortTransactionsDesc(list: TransactionRecord[]): TransactionRecord[] {
-  return [...list].sort((a, b) => {
-    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-    if (dateDiff !== 0) return dateDiff;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  return [...list].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 }
 
 export function getTransactions(params: TransactionQueryParams = {}) {
@@ -141,7 +146,7 @@ export function getTransactions(params: TransactionQueryParams = {}) {
 
   if (params.from || params.to) {
     items = items.filter((t) => {
-      const key = toLocalDateKey(t.date);
+      const key = toLocalDateKey(t.createdAt);
       if (params.from && key < params.from) return false;
       if (params.to && key > params.to) return false;
       return true;
@@ -180,7 +185,7 @@ export function createTransaction(input: unknown) {
     return { success: false as const, error: firstError };
   }
 
-  const { type, title, note, amount, method, category, date } = result.data;
+  const { type, title, note, amount, method, category, createdAt } = result.data;
   const nowIso = new Date().toISOString();
 
   const record: TransactionRecord = {
@@ -191,9 +196,7 @@ export function createTransaction(input: unknown) {
     amount,
     method,
     category: category || "Other",
-    date: date ? new Date(date).toISOString() : nowIso,
-    createdAt: nowIso,
-    updatedAt: nowIso,
+    createdAt: createdAt ? new Date(createdAt).toISOString() : nowIso,
   };
 
   const list = readAllTransactionsRaw();
@@ -231,8 +234,7 @@ export function updateTransaction(id: string, input: unknown) {
     ...(data.amount !== undefined ? { amount: data.amount } : {}),
     ...(data.method !== undefined ? { method: data.method } : {}),
     ...(data.category !== undefined ? { category: data.category } : {}),
-    ...(data.date !== undefined ? { date: new Date(data.date).toISOString() } : {}),
-    updatedAt: new Date().toISOString(),
+    ...(data.createdAt !== undefined ? { createdAt: new Date(data.createdAt).toISOString() } : {}),
   };
 
   list[idx] = updated;
@@ -259,7 +261,7 @@ export function getDashboardSummary(from?: string, to?: string): DashboardSummar
   const all = sortTransactionsDesc(readAllTransactionsRaw());
 
   const periodItems = all.filter((t) => {
-    const key = toLocalDateKey(t.date);
+    const key = toLocalDateKey(t.createdAt);
     if (from && key < from) return false;
     if (to && key > to) return false;
     return true;
@@ -276,12 +278,18 @@ export function getDashboardSummary(from?: string, to?: string): DashboardSummar
   };
 
   const categoryMap = new Map<string, { total: number; count: number }>();
+  const incomeCategoryMap = new Map<string, { total: number; count: number }>();
   const trendMap = new Map<string, { date: string; income: number; expense: number }>();
 
   for (const t of periodItems) {
     if (t.type === "income") {
       totalIncome += t.amount;
       incomeCount += 1;
+
+      const incCatEntry = incomeCategoryMap.get(t.category) || { total: 0, count: 0 };
+      incCatEntry.total += t.amount;
+      incCatEntry.count += 1;
+      incomeCategoryMap.set(t.category, incCatEntry);
     } else {
       totalExpense += t.amount;
       expenseCount += 1;
@@ -297,7 +305,7 @@ export function getDashboardSummary(from?: string, to?: string): DashboardSummar
       methodSplit[t.method].total += t.amount;
     }
 
-    const dateKey = toLocalDateKey(t.date);
+    const dateKey = toLocalDateKey(t.createdAt);
     const trendEntry = trendMap.get(dateKey) || { date: dateKey, income: 0, expense: 0 };
     trendEntry[t.type] += t.amount;
     trendMap.set(dateKey, trendEntry);
@@ -311,13 +319,21 @@ export function getDashboardSummary(from?: string, to?: string): DashboardSummar
     if (t.type === "income") allTimeIncome += t.amount;
     else allTimeExpense += t.amount;
 
-    const dateKey = toLocalDateKey(t.date);
+    const dateKey = toLocalDateKey(t.createdAt);
     const trendEntry = allTrendMap.get(dateKey) || { date: dateKey, income: 0, expense: 0 };
     trendEntry[t.type] += t.amount;
     allTrendMap.set(dateKey, trendEntry);
   }
 
   const categoryBreakdown = Array.from(categoryMap.entries())
+    .map(([category, stats]) => ({
+      category,
+      total: stats.total,
+      count: stats.count,
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  const incomeCategoryBreakdown = Array.from(incomeCategoryMap.entries())
     .map(([category, stats]) => ({
       category,
       total: stats.total,
@@ -335,7 +351,7 @@ export function getDashboardSummary(from?: string, to?: string): DashboardSummar
 
   const todayKey = toLocalDateKey(new Date());
   const recentTransactions = all
-    .filter((t) => toLocalDateKey(t.date) === todayKey)
+    .filter((t) => toLocalDateKey(t.createdAt) === todayKey)
     .slice(0, 5);
 
   return {
@@ -350,6 +366,7 @@ export function getDashboardSummary(from?: string, to?: string): DashboardSummar
     },
     methodSplit,
     categoryBreakdown,
+    incomeCategoryBreakdown,
     dailyTrend,
     allDailyTrend,
     recentTransactions,
@@ -364,7 +381,6 @@ function ensureCategoriesInitialized(): CategoryRecord[] {
 
   if (!initialized) {
     if (!Array.isArray(list) || list.length === 0) {
-      const nowIso = new Date().toISOString();
       list = [
         ...EXPENSE_CATEGORIES.map((c) => ({
           _id: generateId(),
@@ -373,7 +389,6 @@ function ensureCategoriesInitialized(): CategoryRecord[] {
           icon: c.icon,
           color: c.color,
           isDefault: true,
-          createdAt: nowIso,
         })),
         ...INCOME_CATEGORIES.map((c) => ({
           _id: generateId(),
@@ -382,7 +397,6 @@ function ensureCategoriesInitialized(): CategoryRecord[] {
           icon: c.icon,
           color: c.color,
           isDefault: true,
-          createdAt: nowIso,
         })),
       ];
       writeJSON(KEYS.CATEGORIES, list);
@@ -395,13 +409,10 @@ function ensureCategoriesInitialized(): CategoryRecord[] {
 
 export function getCategories(type?: "income" | "expense"): CategoryRecord[] {
   const list = ensureCategoriesInitialized();
-  const sorted = [...list].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
   if (type === "income" || type === "expense") {
-    return sorted.filter((c) => c.type === type);
+    return list.filter((c) => c.type === type);
   }
-  return sorted;
+  return list;
 }
 
 export function createCategory(input: unknown) {
@@ -431,7 +442,6 @@ export function createCategory(input: unknown) {
     icon: icon || "Tag",
     color: color || "",
     isDefault: false,
-    createdAt: new Date().toISOString(),
   };
 
   list.push(newCat);
@@ -510,7 +520,6 @@ function ensurePresetsInitialized(): PresetRecord[] {
 
   if (!initialized) {
     if (!Array.isArray(list) || list.length === 0) {
-      const nowIso = new Date().toISOString();
       list = DEFAULT_PRESETS.map((p) => ({
         _id: generateId(),
         label: p.label,
@@ -520,7 +529,6 @@ function ensurePresetsInitialized(): PresetRecord[] {
         category: p.category,
         icon: p.icon,
         order: p.order,
-        createdAt: nowIso,
       }));
       writeJSON(KEYS.PRESETS, list);
     }
@@ -532,10 +540,7 @@ function ensurePresetsInitialized(): PresetRecord[] {
 
 export function getPresets(): PresetRecord[] {
   const list = ensurePresetsInitialized();
-  return [...list].sort((a, b) => {
-    if (a.order !== b.order) return a.order - b.order;
-    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-  });
+  return [...list].sort((a, b) => a.order - b.order);
 }
 
 export function createPreset(input: unknown) {
@@ -555,7 +560,6 @@ export function createPreset(input: unknown) {
     category: result.data.category,
     icon: result.data.icon,
     order: result.data.order !== undefined && result.data.order !== 0 ? result.data.order : list.length + 1,
-    createdAt: new Date().toISOString(),
   };
 
   list.push(preset);
@@ -630,7 +634,7 @@ export function generateTransactionsCSV(): string {
   ];
 
   const rows = transactions.map((t) => [
-    toLocalDateKey(t.date),
+    toLocalDateKey(t.createdAt),
     t.type.toUpperCase(),
     t.title,
     t.category || "Other",
@@ -842,9 +846,7 @@ export function importTransactionsFromCSV(csvText: string): CSVImportResult {
       amount,
       method,
       category,
-      date: parsedDate,
-      createdAt: nowIso,
-      updatedAt: nowIso,
+      createdAt: parsedDate,
     });
     existingIds.add(id);
 
@@ -860,7 +862,6 @@ export function importTransactionsFromCSV(csvText: string): CSVImportResult {
         icon: "Tag",
         color: "",
         isDefault: false,
-        createdAt: nowIso,
       });
     }
 
@@ -881,4 +882,22 @@ export function importTransactionsFromCSV(csvText: string): CSVImportResult {
       ? { error: "Could not parse any valid transactions from CSV" }
       : {}),
   };
+}
+
+// ==================== CLEAR DATA HELPERS ====================
+
+export function clearAllTransactions(): void {
+  writeJSON(KEYS.TRANSACTIONS, []);
+}
+
+export function clearCategoriesByType(type: "income" | "expense"): void {
+  const list = ensureCategoriesInitialized();
+  const next = list.filter((c) => c.type !== type);
+  writeJSON(KEYS.CATEGORIES, next);
+  localStorage.setItem(KEYS.CATEGORIES_INIT, "true");
+}
+
+export function clearAllPresets(): void {
+  writeJSON(KEYS.PRESETS, []);
+  localStorage.setItem(KEYS.PRESETS_INIT, "true");
 }

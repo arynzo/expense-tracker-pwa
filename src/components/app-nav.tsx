@@ -4,7 +4,7 @@ import {
   ReceiptText,
   Settings,
   Plus,
-  FolderTree,
+  FolderOpen,
 } from "lucide-react";
 
 interface AppNavProps {
@@ -17,7 +17,7 @@ export function AppNav({ onOpenAddModal }: AppNavProps) {
   const navItems = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
     { label: "Transactions", href: "/transactions", icon: ReceiptText },
-    { label: "Categories", href: "/settings/categories", icon: FolderTree },
+    { label: "Categories", href: "/settings/categories", icon: FolderOpen },
     { label: "Settings", href: "/settings", icon: Settings },
   ];
 
@@ -123,7 +123,7 @@ export function AppNav({ onOpenAddModal }: AppNavProps) {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <FolderTree className="w-5 h-5" />
+            <FolderOpen className="w-5 h-5" />
             <span>Categories</span>
           </Link>
 

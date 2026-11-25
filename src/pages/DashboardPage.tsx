@@ -55,6 +55,7 @@ function DashboardContent({
 
       <ChartsContainer
         categoryBreakdown={data.categoryBreakdown}
+        incomeCategoryBreakdown={data.incomeCategoryBreakdown}
         dailyTrend={data.dailyTrend}
         allDailyTrend={data.allDailyTrend}
         methodSplit={data.methodSplit}

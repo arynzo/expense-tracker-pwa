@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -18,6 +19,7 @@ import { CashFlowBarChart } from "./cash-flow-bar-chart";
 
 interface ChartsContainerProps {
   categoryBreakdown: { category: string; total: number; count: number }[];
+  incomeCategoryBreakdown?: { category: string; total: number; count: number }[];
   dailyTrend: { date: string; income: number; expense: number }[];
   allDailyTrend?: { date: string; income: number; expense: number }[];
   methodSplit: {
@@ -43,20 +45,35 @@ const DONUT_COLORS = [
 
 export function ChartsContainer({
   categoryBreakdown,
+  incomeCategoryBreakdown = [],
   dailyTrend,
   allDailyTrend = [],
   methodSplit,
   totalIncome,
   totalExpense,
 }: ChartsContainerProps) {
+  const [categoryType, setCategoryType] = useState<"expense" | "income">("expense");
+  const [methodType, setMethodType] = useState<"expense" | "income">("expense");
+
   const comparisonData = [
     { name: "Income", amount: totalIncome, fill: "#10b981" },
     { name: "Expense", amount: totalExpense, fill: "#f43f5e" },
   ];
 
-  const totalSpent = methodSplit.cash.expense + methodSplit.upi.expense;
-  const cashPercent = totalSpent > 0 ? Math.round((methodSplit.cash.expense / totalSpent) * 100) : 0;
-  const upiPercent = totalSpent > 0 ? Math.round((methodSplit.upi.expense / totalSpent) * 100) : 0;
+  const activeCategories =
+    categoryType === "income" ? incomeCategoryBreakdown : categoryBreakdown;
+  const activeCategoryTotal =
+    categoryType === "income" ? totalIncome : totalExpense;
+
+  const activeUpiAmount =
+    methodType === "income" ? methodSplit.upi.income : methodSplit.upi.expense;
+  const activeCashAmount =
+    methodType === "income" ? methodSplit.cash.income : methodSplit.cash.expense;
+  const activeMethodTotal = activeUpiAmount + activeCashAmount;
+  const cashPercent =
+    activeMethodTotal > 0 ? Math.round((activeCashAmount / activeMethodTotal) * 100) : 0;
+  const upiPercent =
+    activeMethodTotal > 0 ? Math.round((activeUpiAmount / activeMethodTotal) * 100) : 0;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -148,39 +165,72 @@ export function ChartsContainer({
         </div>
       </div>
 
-      {/* 2. Category-wise Expense Donut Chart */}
+      {/* 2. Category-wise Donut Chart */}
       <div className="bg-card border border-border text-card-foreground rounded-2xl p-5 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Category Breakdown</h3>
-            <p className="text-xs text-muted-foreground">Where your expenses are going</p>
+        <div className="space-y-2.5">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Category Breakdown</h3>
+              <p className="text-xs text-muted-foreground">
+                {categoryType === "income"
+                  ? "Where your income is coming from"
+                  : "Where your expenses are going"}
+              </p>
+            </div>
+            <span
+              className={`text-xs font-medium px-2 py-0.5 rounded-full border shrink-0 ${
+                categoryType === "income"
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                  : "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20"
+              }`}
+            >
+              {formatINR(activeCategoryTotal)} total
+            </span>
           </div>
-          <span className="text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
-            {formatINR(totalExpense)} total
-          </span>
+
+          <div className="flex justify-start">
+            <div className="flex items-center bg-secondary/80 p-0.5 rounded-xl border border-border text-[11px]">
+              {(["expense", "income"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setCategoryType(t)}
+                  className={`px-2.5 py-1 rounded-lg font-semibold capitalize transition cursor-pointer ${
+                    categoryType === t
+                      ? t === "income"
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "bg-rose-600 text-white shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="h-64 w-full flex flex-col sm:flex-row items-center justify-between gap-4">
-          {categoryBreakdown.length === 0 ? (
-            <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
-              No expenses recorded for this period
+        <div className="min-h-64 sm:h-72 w-full flex flex-col sm:flex-row items-center justify-between gap-4">
+          {activeCategories.length === 0 ? (
+            <div className="h-64 w-full flex items-center justify-center text-xs text-muted-foreground">
+              No {categoryType}s recorded for this period
             </div>
           ) : (
             <>
-              <div className="h-48 sm:h-full w-full sm:w-1/2 flex items-center justify-center">
+              <div className="h-56 sm:h-full w-full sm:w-1/2 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: 12, right: 12, bottom: 12, left: 12 }}>
                     <Pie
-                      data={categoryBreakdown}
+                      data={activeCategories}
                       dataKey="total"
                       nameKey="category"
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={75}
+                      innerRadius="50%"
+                      outerRadius="78%"
                       paddingAngle={4}
                     >
-                      {categoryBreakdown.map((_entry, index) => (
+                      {activeCategories.map((_entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={DONUT_COLORS[index % DONUT_COLORS.length]}
@@ -212,11 +262,11 @@ export function ChartsContainer({
                 </ResponsiveContainer>
               </div>
 
-              <div className="w-full sm:w-1/2 max-h-48 overflow-y-auto space-y-2 pr-1 text-xs">
-                {categoryBreakdown.map((cat, idx) => {
+              <div className="w-full sm:w-1/2 max-h-48 sm:max-h-60 overflow-y-auto space-y-2.5 pr-1 text-xs">
+                {activeCategories.map((cat, idx) => {
                   const pct =
-                    totalExpense > 0
-                      ? Math.round((cat.total / totalExpense) * 100)
+                    activeCategoryTotal > 0
+                      ? Math.round((cat.total / activeCategoryTotal) * 100)
                       : 0;
                   return (
                     <div
@@ -288,9 +338,29 @@ export function ChartsContainer({
 
       {/* 4. Payment Method Split (Cash vs UPI) */}
       <div className="bg-card border border-border text-card-foreground rounded-2xl p-5 space-y-4 shadow-xs flex flex-col justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">Payment Method Split</h3>
-          <p className="text-xs text-muted-foreground">Distribution between Cash and Online UPI</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Payment Method Split</h3>
+            <p className="text-xs text-muted-foreground">Distribution between Cash and Online UPI</p>
+          </div>
+          <div className="flex items-center bg-secondary/80 p-0.5 rounded-xl border border-border text-[11px]">
+            {(["expense", "income"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setMethodType(t)}
+                className={`px-2.5 py-1 rounded-lg font-semibold capitalize transition cursor-pointer ${
+                  methodType === t
+                    ? t === "income"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "bg-rose-600 text-white shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-2">
@@ -300,10 +370,10 @@ export function ChartsContainer({
               <Smartphone className="w-4 h-4" />
             </div>
             <div className="text-xl font-bold text-foreground">
-              {formatINR(methodSplit.upi.expense)}
+              {formatINR(activeUpiAmount)}
             </div>
             <div className="text-[11px] text-muted-foreground">
-              {upiPercent}% of total expense
+              {upiPercent}% of total {methodType}
             </div>
           </div>
 
@@ -313,10 +383,10 @@ export function ChartsContainer({
               <Banknote className="w-4 h-4" />
             </div>
             <div className="text-xl font-bold text-foreground">
-              {formatINR(methodSplit.cash.expense)}
+              {formatINR(activeCashAmount)}
             </div>
             <div className="text-[11px] text-muted-foreground">
-              {cashPercent}% of total expense
+              {cashPercent}% of total {methodType}
             </div>
           </div>
         </div>
@@ -330,12 +400,12 @@ export function ChartsContainer({
             <div
               className="h-full bg-sky-500 transition-all duration-500"
               style={{ width: `${upiPercent}%` }}
-              title={`UPI: ${formatINR(methodSplit.upi.expense)}`}
+              title={`UPI: ${formatINR(activeUpiAmount)}`}
             />
             <div
               className="h-full bg-amber-500 transition-all duration-500"
               style={{ width: `${cashPercent}%` }}
-              title={`Cash: ${formatINR(methodSplit.cash.expense)}`}
+              title={`Cash: ${formatINR(activeCashAmount)}`}
             />
           </div>
         </div>

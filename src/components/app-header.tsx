@@ -5,7 +5,7 @@ import {
   LayoutDashboard,
   ReceiptText,
   Settings,
-  FolderTree,
+  FolderOpen,
   Zap,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -33,7 +33,7 @@ export function AppHeader({ onOpenAddModal, title }: AppHeaderProps) {
       return <Zap className="w-5 h-5 text-amber-500" />;
     }
     if (t.includes("category")) {
-      return <FolderTree className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />;
+      return <FolderOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />;
     }
     if (t.includes("transaction") || t.includes("ledger") || t.includes("history")) {
       return <ReceiptText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />;

@@ -55,7 +55,7 @@ export default function ChipsSettingsPage() {
   const categoryList =
     dynamicCategories.length > 0
       ? dynamicCategories
-      : [{ _id: "fallback", name: "Food", icon: "Utensils", type: "expense" as const, color: "", isDefault: true, createdAt: "" }];
+      : [{ _id: "fallback", name: "Food", icon: "Utensils", type: "expense" as const, color: "", isDefault: true }];
 
   const loadPresets = useCallback(() => {
     try {
