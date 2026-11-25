@@ -13,6 +13,25 @@ export const THEME_PRESET_KEY = "expense_tracker_theme_preset";
 export const CUSTOM_THEME_CSS_KEY = "expense_tracker_custom_theme_css";
 export const HEADING_WEIGHT_KEY = "expense_tracker_heading_weight";
 export const BODY_WEIGHT_KEY = "expense_tracker_body_weight";
+export const FONT_FAMILY_KEY = "expense_tracker_font_family";
+
+export const FONT_FAMILY_OPTIONS = [
+  {
+    value: "dm-sans",
+    label: "DM Sans",
+    css: '"DM Sans Variable", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  },
+  {
+    value: "serif",
+    label: "Serif",
+    css: '"Lora Variable", Georgia, serif',
+  },
+  {
+    value: "mono",
+    label: "Mono",
+    css: '"JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+  },
+] as const;
 
 export const HEADING_WEIGHT_OPTIONS = [
   { value: "400", label: "Normal" },
@@ -142,7 +161,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     description: "Cozy stone surfaces & pill-like radius",
     preview: ["#d97706", "#fffbeb", "#451a03"],
     radius: "1rem",
-    fontSans: '"DM Sans Variable", system-ui, -apple-system, sans-serif',
+    fontSans: '"Lora Variable", Georgia, serif',
     light: {
       "--background": "oklch(0.985 0.012 80)",
       "--foreground": "oklch(0.20 0.025 55)",
@@ -186,11 +205,11 @@ export const THEME_PRESETS: ThemePreset[] = [
   },
   {
     id: "mono",
-    name: "Sharp Mono",
-    description: "Crisp corners & technical mono font",
+    name: "Sharp Black",
+    description: "Crisp corners & high-contrast monochrome",
     preview: ["#09090b", "#e4e4e7", "#27272a"],
     radius: "0.25rem",
-    fontSans: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    fontSans: '"JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     light: {
       "--background": "oklch(0.98 0 0)",
       "--foreground": "oklch(0.12 0 0)",
@@ -320,8 +339,6 @@ export function applyThemePreset(presetId: string, customCss?: string): boolean 
 
   const lightRules = Object.entries({
     "--radius": preset.radius,
-    "--font-sans": preset.fontSans,
-    "--font-heading": preset.fontSans,
     ...preset.light,
   })
     .map(([k, v]) => `  ${k}: ${v};`)
@@ -376,6 +393,43 @@ export function applyTypographyWeights(headingWeight?: string, bodyWeight?: stri
     }
     h1, h2, h3, h4 {
       font-weight: ${hWeight} !important;
+    }
+  `;
+}
+
+export function getSavedFontFamily(): string {
+  try {
+    return localStorage.getItem(FONT_FAMILY_KEY) || "dm-sans";
+  } catch {
+    return "dm-sans";
+  }
+}
+
+export function applyFontFamily(fontId?: string): void {
+  const id = fontId ?? getSavedFontFamily();
+  const opt = FONT_FAMILY_OPTIONS.find((f) => f.value === id) ?? FONT_FAMILY_OPTIONS[0];
+
+  try {
+    localStorage.setItem(FONT_FAMILY_KEY, opt.value);
+  } catch {
+    // ignore
+  }
+
+  const styleId = "app-font-family-style";
+  let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = styleId;
+    document.head.appendChild(styleEl);
+  }
+
+  styleEl.textContent = `
+    :root {
+      --font-sans: ${opt.css};
+      --font-heading: ${opt.css};
+    }
+    html, body, h1, h2, h3, h4, h5, h6 {
+      font-family: ${opt.css} !important;
     }
   `;
 }

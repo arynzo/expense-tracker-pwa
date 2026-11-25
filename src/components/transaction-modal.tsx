@@ -473,32 +473,44 @@ function TransactionModalContent({
               )}
             </button>
 
-            {initialData?._id && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isSubmitting || isDeleting}
-                className={`w-full py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 border transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                  showDeleteConfirm
-                    ? "border-rose-600 text-rose-600 bg-rose-500/10 animate-pulse"
-                    : "border-rose-500/40 text-rose-600 dark:text-rose-400 bg-transparent hover:bg-rose-500/10 active:bg-rose-500/20"
-                }`}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Deleting...
-                  </>
-                ) : showDeleteConfirm ? (
-                  <>
-                    <Trash2 className="w-4 h-4" /> Click again to confirm delete
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4" /> Delete Transaction
-                  </>
-                )}
-              </button>
-            )}
+            {initialData?._id &&
+              (showDeleteConfirm ? (
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={isDeleting}
+                    className="w-full py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center bg-secondary hover:bg-muted text-foreground border border-border transition cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isSubmitting || isDeleting}
+                    className="w-full py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white shadow-xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" /> Confirm Delete
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isSubmitting || isDeleting}
+                  className="w-full py-3 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 border border-rose-500/40 text-rose-600 dark:text-rose-400 bg-transparent hover:bg-rose-500/10 active:bg-rose-500/20 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" /> Delete Transaction
+                </button>
+              ))}
           </div>
         </form>
       </div>

@@ -30,12 +30,15 @@ import {
 } from "@/components/ui/select";
 import {
   THEME_PRESETS,
+  FONT_FAMILY_OPTIONS,
   HEADING_WEIGHT_OPTIONS,
   BODY_WEIGHT_OPTIONS,
   applyThemePreset,
+  applyFontFamily,
   applyTypographyWeights,
   getSavedThemePreset,
   getSavedCustomThemeCss,
+  getSavedFontFamily,
   getSavedHeadingWeight,
   getSavedBodyWeight,
 } from "@/lib/themes";
@@ -96,11 +99,19 @@ export default function SettingsPage() {
   // Clear Data Confirmation state
   const [confirmClear, setConfirmClear] = useState<ClearActionType | null>(null);
 
-  // Theme Preset & Font Weight state
+  // Theme Preset, Font Family & Font Weight state
   const [themePreset, setThemePreset] = useState<string>(() => getSavedThemePreset());
   const [customThemeCss, setCustomThemeCss] = useState<string>(() => getSavedCustomThemeCss());
+  const [fontFamily, setFontFamily] = useState<string>(() => getSavedFontFamily());
   const [headingWeight, setHeadingWeight] = useState<string>(() => getSavedHeadingWeight());
   const [bodyWeight, setBodyWeight] = useState<string>(() => getSavedBodyWeight());
+
+  const handleFontFamilyChange = (val: string) => {
+    setFontFamily(val);
+    applyFontFamily(val);
+    const opt = FONT_FAMILY_OPTIONS.find((f) => f.value === val);
+    toast.success(`Font changed to ${opt?.label || val}`);
+  };
 
   const handleHeadingWeightChange = (val: string) => {
     setHeadingWeight(val);
@@ -444,6 +455,43 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Font Family Selector */}
+            <div className="pt-3 border-t border-border space-y-2">
+              <div>
+                <h4 className="text-sm font-semibold text-foreground">Font Family</h4>
+                <p className="text-[11px] text-muted-foreground">
+                  Applies to both titles and body text across the app
+                </p>
+              </div>
+              <div className="max-w-sm">
+                <Select
+                  value={fontFamily}
+                  onValueChange={(val) => {
+                    if (val) handleFontFamilyChange(val);
+                  }}
+                >
+                  <SelectTrigger className="w-full h-10 rounded-xl bg-background border-input text-sm font-medium">
+                    <span
+                      style={{
+                        fontFamily:
+                          FONT_FAMILY_OPTIONS.find((f) => f.value === fontFamily)?.css,
+                      }}
+                    >
+                      {FONT_FAMILY_OPTIONS.find((f) => f.value === fontFamily)?.label ||
+                        "DM Sans"}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FONT_FAMILY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <span style={{ fontFamily: opt.css }}>{opt.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Font Weight Selectors */}
