@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { formatINR } from "@/lib/utils";
 
@@ -13,6 +14,45 @@ interface SummaryData {
 interface SummaryCardsProps {
   summary: SummaryData;
   isLoading?: boolean;
+}
+
+function AnimatedINR({ value, duration = 650 }: { value: number; duration?: number }) {
+  const [displayValue, setDisplayValue] = useState<number>(() => {
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      return value;
+    }
+    return 0;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    let rafId = 0;
+    const startTime = performance.now();
+    const isInt = Number.isInteger(value);
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Smooth ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = value * eased;
+
+      if (progress < 1) {
+        setDisplayValue(isInt ? Math.round(current) : Math.round(current * 100) / 100);
+        rafId = requestAnimationFrame(tick);
+      } else {
+        setDisplayValue(value);
+      }
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [value, duration]);
+
+  return <>{formatINR(displayValue)}</>;
 }
 
 export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
@@ -40,8 +80,8 @@ export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
             <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               Total Income
             </span>
-            <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {formatINR(summary.totalIncome)}
+            <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground tabular-nums">
+              <AnimatedINR value={summary.totalIncome} />
             </div>
           </div>
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400">
@@ -61,8 +101,8 @@ export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
             <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
               Total Expense
             </span>
-            <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {formatINR(summary.totalExpense)}
+            <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground tabular-nums">
+              <AnimatedINR value={summary.totalExpense} />
             </div>
           </div>
           <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-600 dark:text-rose-400">
@@ -86,8 +126,8 @@ export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
             >
               Net Balance
             </span>
-            <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {formatINR(summary.netBalance)}
+            <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground tabular-nums">
+              <AnimatedINR value={summary.netBalance} />
             </div>
           </div>
           <div
