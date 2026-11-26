@@ -98,16 +98,27 @@ function readJSON<T>(key: string, fallback: T): T {
   }
 }
 
+let txCache: TransactionRecord[] | null = null;
+let catCache: CategoryRecord[] | null = null;
+let presetCache: PresetRecord[] | null = null;
+
 function writeJSON<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
+  if (key === KEYS.TRANSACTIONS) txCache = null;
+  else if (key === KEYS.CATEGORIES) catCache = null;
+  else if (key === KEYS.PRESETS) presetCache = null;
 }
 
 // ==================== TRANSACTIONS CRUD ====================
 
 function readAllTransactionsRaw(): TransactionRecord[] {
+  if (txCache !== null) return txCache;
   const list = readJSON<Array<TransactionRecord & { date?: string }>>(KEYS.TRANSACTIONS, []);
-  if (!Array.isArray(list)) return [];
-  return list.map((item) => ({
+  if (!Array.isArray(list)) {
+    txCache = [];
+    return txCache;
+  }
+  txCache = list.map((item) => ({
     _id: item._id,
     type: item.type,
     title: item.title,
@@ -117,6 +128,7 @@ function readAllTransactionsRaw(): TransactionRecord[] {
     category: item.category || "Other",
     createdAt: item.createdAt || item.date || new Date().toISOString(),
   }));
+  return txCache;
 }
 
 function sortTransactionsDesc(list: TransactionRecord[]): TransactionRecord[] {
@@ -376,6 +388,7 @@ export function getDashboardSummary(from?: string, to?: string): DashboardSummar
 // ==================== CATEGORIES CRUD ====================
 
 function ensureCategoriesInitialized(): CategoryRecord[] {
+  if (catCache !== null) return catCache;
   let list = readJSON<CategoryRecord[]>(KEYS.CATEGORIES, []);
   const initialized = localStorage.getItem(KEYS.CATEGORIES_INIT);
 
@@ -404,7 +417,8 @@ function ensureCategoriesInitialized(): CategoryRecord[] {
     localStorage.setItem(KEYS.CATEGORIES_INIT, "true");
   }
 
-  return Array.isArray(list) ? list : [];
+  catCache = Array.isArray(list) ? list : [];
+  return catCache;
 }
 
 export function getCategories(type?: "income" | "expense"): CategoryRecord[] {
@@ -515,6 +529,7 @@ export function deleteCategory(id: string) {
 // ==================== PRESET CHIPS CRUD ====================
 
 function ensurePresetsInitialized(): PresetRecord[] {
+  if (presetCache !== null) return presetCache;
   let list = readJSON<PresetRecord[]>(KEYS.PRESETS, []);
   const initialized = localStorage.getItem(KEYS.PRESETS_INIT);
 
@@ -535,7 +550,8 @@ function ensurePresetsInitialized(): PresetRecord[] {
     localStorage.setItem(KEYS.PRESETS_INIT, "true");
   }
 
-  return Array.isArray(list) ? list : [];
+  presetCache = Array.isArray(list) ? list : [];
+  return presetCache;
 }
 
 export function getPresets(): PresetRecord[] {

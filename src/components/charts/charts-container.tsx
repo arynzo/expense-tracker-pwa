@@ -150,6 +150,7 @@ export function ChartsContainer({
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#incomeGrad)"
+                  isAnimationActive={false}
                 />
                 <Area
                   type="monotone"
@@ -158,6 +159,7 @@ export function ChartsContainer({
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#expenseGrad)"
+                  isAnimationActive={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -229,6 +231,7 @@ export function ChartsContainer({
                       innerRadius="50%"
                       outerRadius="78%"
                       paddingAngle={4}
+                      isAnimationActive={false}
                     >
                       {activeCategories.map((_entry, index) => (
                         <Cell
@@ -326,7 +329,7 @@ export function ChartsContainer({
                   return null;
                 }}
               />
-              <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
+              <Bar dataKey="amount" radius={[8, 8, 0, 0]} isAnimationActive={false}>
                 {comparisonData.map((entry, index) => (
                   <Cell key={`bar-${index}`} fill={entry.fill} />
                 ))}

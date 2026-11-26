@@ -320,6 +320,7 @@ export function CashFlowBarChart({ allDailyTrend }: CashFlowBarChartProps) {
                 fill="#10b981"
                 radius={[6, 6, 0, 0]}
                 maxBarSize={40}
+                isAnimationActive={false}
               />
               <Bar
                 dataKey="expense"
@@ -327,6 +328,7 @@ export function CashFlowBarChart({ allDailyTrend }: CashFlowBarChartProps) {
                 fill="#f43f5e"
                 radius={[6, 6, 0, 0]}
                 maxBarSize={40}
+                isAnimationActive={false}
               />
                 </BarChart>
               </ResponsiveContainer>

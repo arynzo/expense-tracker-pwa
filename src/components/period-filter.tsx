@@ -139,7 +139,7 @@ export function PeriodFilter({ onPeriodChange }: PeriodFilterProps) {
               key={item.id}
               type="button"
               onClick={() => handleSelect(item.id as PeriodType)}
-              className={`px-3 py-1.5 rounded-xl font-medium transition shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl font-medium transition shrink-0 cursor-pointer touch-manipulation ${
                 isActive
                   ? "bg-primary text-primary-foreground font-semibold shadow-xs"
                   : "bg-card text-muted-foreground hover:text-foreground hover:bg-muted border border-border"

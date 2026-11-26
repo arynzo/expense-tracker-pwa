@@ -13,7 +13,8 @@ export const THEME_PRESET_KEY = "expense_tracker_theme_preset";
 export const CUSTOM_THEME_CSS_KEY = "expense_tracker_custom_theme_css";
 export const HEADING_WEIGHT_KEY = "expense_tracker_heading_weight";
 export const BODY_WEIGHT_KEY = "expense_tracker_body_weight";
-export const FONT_FAMILY_KEY = "expense_tracker_font_family";
+export const HEADING_FONT_KEY = "expense_tracker_heading_font";
+export const BODY_FONT_KEY = "expense_tracker_body_font";
 
 export const FONT_FAMILY_OPTIONS = [
   {
@@ -397,20 +398,31 @@ export function applyTypographyWeights(headingWeight?: string, bodyWeight?: stri
   `;
 }
 
-export function getSavedFontFamily(): string {
+export function getSavedHeadingFont(): string {
   try {
-    return localStorage.getItem(FONT_FAMILY_KEY) || "dm-sans";
+    return localStorage.getItem(HEADING_FONT_KEY) || "dm-sans";
   } catch {
     return "dm-sans";
   }
 }
 
-export function applyFontFamily(fontId?: string): void {
-  const id = fontId ?? getSavedFontFamily();
-  const opt = FONT_FAMILY_OPTIONS.find((f) => f.value === id) ?? FONT_FAMILY_OPTIONS[0];
+export function getSavedBodyFont(): string {
+  try {
+    return localStorage.getItem(BODY_FONT_KEY) || "dm-sans";
+  } catch {
+    return "dm-sans";
+  }
+}
+
+export function applyFontFamily(headingFontId?: string, bodyFontId?: string): void {
+  const hId = headingFontId ?? getSavedHeadingFont();
+  const bId = bodyFontId ?? getSavedBodyFont();
+  const hOpt = FONT_FAMILY_OPTIONS.find((f) => f.value === hId) ?? FONT_FAMILY_OPTIONS[0];
+  const bOpt = FONT_FAMILY_OPTIONS.find((f) => f.value === bId) ?? FONT_FAMILY_OPTIONS[0];
 
   try {
-    localStorage.setItem(FONT_FAMILY_KEY, opt.value);
+    localStorage.setItem(HEADING_FONT_KEY, hOpt.value);
+    localStorage.setItem(BODY_FONT_KEY, bOpt.value);
   } catch {
     // ignore
   }
@@ -425,11 +437,14 @@ export function applyFontFamily(fontId?: string): void {
 
   styleEl.textContent = `
     :root {
-      --font-sans: ${opt.css};
-      --font-heading: ${opt.css};
+      --font-sans: ${bOpt.css};
+      --font-heading: ${hOpt.css};
     }
-    html, body, h1, h2, h3, h4, h5, h6 {
-      font-family: ${opt.css} !important;
+    html, body {
+      font-family: ${bOpt.css} !important;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: ${hOpt.css} !important;
     }
   `;
 }

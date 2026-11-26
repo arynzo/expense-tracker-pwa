@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { AppLayoutWrapper } from "@/components/app-layout-wrapper";
 import { QuickPresets } from "@/components/quick-presets";
 import { SummaryCards } from "@/components/summary-cards";
@@ -32,9 +32,9 @@ function DashboardContent({
     return getDashboardSummary(dateRange.from, dateRange.to);
   }, [dateRange, refreshKey]);
 
-  const handlePeriodChange = (from?: string, to?: string) => {
+  const handlePeriodChange = useCallback((from?: string, to?: string) => {
     setDateRange({ from, to });
-  };
+  }, []);
 
   return (
     <div className="space-y-6">

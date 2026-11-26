@@ -38,7 +38,8 @@ import {
   applyTypographyWeights,
   getSavedThemePreset,
   getSavedCustomThemeCss,
-  getSavedFontFamily,
+  getSavedHeadingFont,
+  getSavedBodyFont,
   getSavedHeadingWeight,
   getSavedBodyWeight,
 } from "@/lib/themes";
@@ -102,15 +103,23 @@ export default function SettingsPage() {
   // Theme Preset, Font Family & Font Weight state
   const [themePreset, setThemePreset] = useState<string>(() => getSavedThemePreset());
   const [customThemeCss, setCustomThemeCss] = useState<string>(() => getSavedCustomThemeCss());
-  const [fontFamily, setFontFamily] = useState<string>(() => getSavedFontFamily());
+  const [headingFont, setHeadingFont] = useState<string>(() => getSavedHeadingFont());
+  const [bodyFont, setBodyFont] = useState<string>(() => getSavedBodyFont());
   const [headingWeight, setHeadingWeight] = useState<string>(() => getSavedHeadingWeight());
   const [bodyWeight, setBodyWeight] = useState<string>(() => getSavedBodyWeight());
 
-  const handleFontFamilyChange = (val: string) => {
-    setFontFamily(val);
-    applyFontFamily(val);
+  const handleHeadingFontChange = (val: string) => {
+    setHeadingFont(val);
+    applyFontFamily(val, bodyFont);
     const opt = FONT_FAMILY_OPTIONS.find((f) => f.value === val);
-    toast.success(`Font changed to ${opt?.label || val}`);
+    toast.success(`Title font: ${opt?.label || val}`);
+  };
+
+  const handleBodyFontChange = (val: string) => {
+    setBodyFont(val);
+    applyFontFamily(headingFont, val);
+    const opt = FONT_FAMILY_OPTIONS.find((f) => f.value === val);
+    toast.success(`Body font: ${opt?.label || val}`);
   };
 
   const handleHeadingWeightChange = (val: string) => {
@@ -457,29 +466,65 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* Font Family Selector */}
-            <div className="pt-3 border-t border-border space-y-2">
-              <div>
-                <h4 className="text-sm font-semibold text-foreground">Font Family</h4>
-                <p className="text-[11px] text-muted-foreground">
-                  Applies to both titles and body text across the app
-                </p>
-              </div>
-              <div className="max-w-sm">
+            {/* Font Family Selectors */}
+            <div className="pt-3 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Title Font */}
+              <div className="space-y-2">
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">Title Font</h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Font used for page &amp; card headings
+                  </p>
+                </div>
                 <Select
-                  value={fontFamily}
+                  value={headingFont}
                   onValueChange={(val) => {
-                    if (val) handleFontFamilyChange(val);
+                    if (val) handleHeadingFontChange(val);
                   }}
                 >
                   <SelectTrigger className="w-full h-10 rounded-xl bg-background border-input text-sm font-medium">
                     <span
                       style={{
                         fontFamily:
-                          FONT_FAMILY_OPTIONS.find((f) => f.value === fontFamily)?.css,
+                          FONT_FAMILY_OPTIONS.find((f) => f.value === headingFont)?.css,
                       }}
                     >
-                      {FONT_FAMILY_OPTIONS.find((f) => f.value === fontFamily)?.label ||
+                      {FONT_FAMILY_OPTIONS.find((f) => f.value === headingFont)?.label ||
+                        "DM Sans"}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FONT_FAMILY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <span style={{ fontFamily: opt.css }}>{opt.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Body Font */}
+              <div className="space-y-2">
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">Body Font</h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Font used for general text &amp; labels
+                  </p>
+                </div>
+                <Select
+                  value={bodyFont}
+                  onValueChange={(val) => {
+                    if (val) handleBodyFontChange(val);
+                  }}
+                >
+                  <SelectTrigger className="w-full h-10 rounded-xl bg-background border-input text-sm font-medium">
+                    <span
+                      style={{
+                        fontFamily:
+                          FONT_FAMILY_OPTIONS.find((f) => f.value === bodyFont)?.css,
+                      }}
+                    >
+                      {FONT_FAMILY_OPTIONS.find((f) => f.value === bodyFont)?.label ||
                         "DM Sans"}
                     </span>
                   </SelectTrigger>
