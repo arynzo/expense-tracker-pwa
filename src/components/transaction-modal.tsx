@@ -219,7 +219,7 @@ function TransactionModalContent({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto overscroll-contain touch-pan-y space-y-4 sm:space-y-5">
+        <form onSubmit={handleSubmit} className="px-4 pt-4 pb-[max(1.75rem,env(safe-area-inset-bottom))] sm:p-6 overflow-y-auto overscroll-contain touch-pan-y space-y-4 sm:space-y-5">
           <div className="grid grid-cols-2 gap-2 p-1 bg-muted/60 rounded-xl border border-border">
             <button
               type="button"

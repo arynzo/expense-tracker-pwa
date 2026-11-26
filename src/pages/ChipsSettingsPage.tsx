@@ -325,7 +325,7 @@ export default function ChipsSettingsPage() {
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-xs overscroll-contain touch-pan-y animate-in fade-in duration-150">
               <div
-                className="w-full max-w-md bg-card border border-border text-card-foreground rounded-t-3xl sm:rounded-2xl p-6 shadow-xl space-y-5 overscroll-contain max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto box-border"
+                className="w-full max-w-md bg-card border border-border text-card-foreground rounded-t-3xl sm:rounded-2xl px-6 pt-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] sm:p-6 shadow-xl space-y-5 overscroll-contain max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto box-border"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between border-b border-border pb-3">

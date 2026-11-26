@@ -724,7 +724,7 @@ export default function SettingsPage() {
           {isImportOpen && (
             <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
               <div
-                className="w-full max-w-lg bg-card border border-border text-card-foreground rounded-t-3xl sm:rounded-2xl p-6 shadow-xl space-y-4 max-h-[90dvh] overflow-y-auto"
+                className="w-full max-w-lg bg-card border border-border text-card-foreground rounded-t-3xl sm:rounded-2xl px-6 pt-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] sm:p-6 shadow-xl space-y-4 max-h-[90dvh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between border-b border-border pb-3">

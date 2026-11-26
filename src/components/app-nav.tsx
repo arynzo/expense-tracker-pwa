@@ -74,7 +74,7 @@ export function AppNav({ onOpenAddModal }: AppNavProps) {
       </aside>
 
       {/* Mobile Bottom Navigation Bar (5-Column Grid with Dead-Center Plus Button) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border px-2 py-1.5 shadow-lg select-none touch-manipulation">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border px-2 pt-2 pb-3 shadow-lg select-none touch-manipulation">
         <div className="grid grid-cols-5 items-center w-full max-w-md mx-auto">
           {/* 1. Home */}
           <Link
