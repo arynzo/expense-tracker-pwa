@@ -17,6 +17,11 @@ import { AppLayoutWrapper } from "@/components/app-layout-wrapper";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { AVAILABLE_ICONS, isIconUrl, isLucideIconName } from "@/lib/constants";
 import {
+  normalizeIconInput,
+  cacheIconUrl,
+  uncacheIconUrlIfUnused,
+} from "@/lib/icon-cache";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -104,9 +109,12 @@ export default function CategoriesPage() {
       toast.error("Please enter a category name");
       return;
     }
-    const trimmedIcon = categoryIcon.trim();
+    const trimmedIcon =
+      iconSource === "Icon Link"
+        ? normalizeIconInput(categoryIcon)
+        : categoryIcon.trim();
     if (iconSource === "Icon Link" && !isIconUrl(trimmedIcon)) {
-      toast.error("Please enter a valid icon URL (https://...)");
+      toast.error("Please enter a valid icon URL, data:image/svg+xml, or <svg> code");
       return;
     }
     if (iconSource === "Emoji" && !trimmedIcon) {
@@ -116,6 +124,7 @@ export default function CategoriesPage() {
 
     setIsSaving(true);
     try {
+      const oldIcon = editingCategory?.icon;
       const payload = {
         name: categoryName.trim(),
         type: activeTab,
@@ -128,6 +137,13 @@ export default function CategoriesPage() {
 
       if (!res.success) {
         throw new Error(res.error);
+      }
+
+      if (iconSource === "Icon Link") {
+        void cacheIconUrl(payload.icon);
+      }
+      if (oldIcon && oldIcon !== payload.icon) {
+        void uncacheIconUrlIfUnused(oldIcon);
       }
 
       toast.success(editingCategory ? "Category updated!" : "Category created!");
@@ -145,10 +161,12 @@ export default function CategoriesPage() {
     if (!deletingCategory?._id) return;
     setIsDeleting(true);
     try {
+      const deletedIcon = deletingCategory.icon;
       const res = deleteCategory(deletingCategory._id);
       if (!res.success) {
         throw new Error(res.error);
       }
+      void uncacheIconUrlIfUnused(deletedIcon);
       toast.success("Category removed");
       setDeletingCategory(null);
       loadCategories();
@@ -390,7 +408,7 @@ export default function CategoriesPage() {
                   {iconSource === "Icon Link" && (
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Icon Image URL
+                        Icon URL or SVG Data URI
                       </label>
                       <div className="flex items-center gap-2.5">
                         <div className="w-10 h-10 rounded-xl bg-background border border-input flex items-center justify-center shrink-0 overflow-hidden">
@@ -401,10 +419,11 @@ export default function CategoriesPage() {
                           )}
                         </div>
                         <input
-                          type="url"
+                          type="text"
+                          inputMode="url"
                           value={categoryIcon}
                           onChange={(e) => setCategoryIcon(e.target.value)}
-                          placeholder="https://example.com/icon.png"
+                          placeholder="https://..., data:image/svg+xml,..., or <svg>..."
                           required
                           className="w-full bg-background border border-input rounded-xl px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-hidden focus:border-ring"
                         />

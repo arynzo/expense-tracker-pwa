@@ -89,7 +89,8 @@ const EXTRA_BUILT_IN_ICONS = new Set(["CircleEllipsis", "Banknote", "TrendingDow
 
 export function isIconUrl(val?: string): boolean {
   if (!val) return false;
-  return /^(https?:\/\/|data:image\/|\/)/i.test(val.trim());
+  const trimmed = val.trim();
+  return /^(https?:\/\/|data:image\/|\/|<svg[\s>]|url\()/i.test(trimmed);
 }
 
 export function isLucideIconName(val?: string): boolean {

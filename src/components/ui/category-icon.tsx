@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Utensils,
   Coffee,
@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import { getCategories } from "@/lib/storage";
 import { isIconUrl, isLucideIconName } from "@/lib/constants";
+import { normalizeIconInput } from "@/lib/icon-cache";
 import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, React.ComponentType<LucideProps>> = {
@@ -104,6 +105,31 @@ interface CategoryIconProps extends LucideProps {
   category?: string;
 }
 
+function IconImage({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return <CircleDollarSign className={className} />;
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setHasError(true)}
+      className={cn("object-contain rounded-sm shrink-0", className)}
+    />
+  );
+}
+
 export function CategoryIcon({ name, category, className, ...props }: CategoryIconProps) {
   let resolvedName = name?.trim();
 
@@ -121,13 +147,15 @@ export function CategoryIcon({ name, category, className, ...props }: CategoryIc
     }
   }
 
-  // 1. Direct Icon URL
+  // 1. Direct Icon URL, data:image/svg+xml, or <svg> markup
   if (resolvedName && isIconUrl(resolvedName)) {
+    const normalizedSrc = normalizeIconInput(resolvedName);
     return (
-      <img
-        src={resolvedName}
+      <IconImage
+        key={normalizedSrc}
+        src={normalizedSrc}
         alt={category || "icon"}
-        className={cn("object-contain rounded-sm shrink-0", className)}
+        className={className}
       />
     );
   }
